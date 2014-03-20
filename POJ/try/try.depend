@@ -1,8 +1,0 @@
-# depslib dependency file v1.0
-1377579843 source:g:\study\acm\poj\try\main.cpp
-	<iostream>
-	<stdio.h>
-	<string.h>
-	<algorithm>
-	<math.h>
-

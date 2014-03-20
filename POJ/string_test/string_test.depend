@@ -1,6 +1,0 @@
-# depslib dependency file v1.0
-1376361794 source:g:\study\acm\poj\string_test\main.cpp
-	<stdio.h>
-	<string.h>
-	<math.h>
-
