@@ -1,4 +1,5 @@
 small-projects
 ==============
+Small projects. Mostly done in one day.
 
-small projects
+README in each project 
