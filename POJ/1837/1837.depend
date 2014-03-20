@@ -1,0 +1,6 @@
+# depslib dependency file v1.0
+1377738252 source:g:\study\acm\poj\1837\main.cpp
+	<iostream>
+	<memory.h>
+	<stdlib.h>
+

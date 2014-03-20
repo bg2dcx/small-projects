@@ -1,0 +1,5 @@
+# depslib dependency file v1.0
+1375812472 source:g:\study\acm\poj\1555\main.cpp
+	<iostream>
+	<stdio.h>
+

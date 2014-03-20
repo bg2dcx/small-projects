@@ -1,0 +1,6 @@
+# depslib dependency file v1.0
+1382833366 source:g:\study\acm\poj\input_analysis\main.cpp
+	<iostream>
+	<stdio.h>
+	<string.h>
+

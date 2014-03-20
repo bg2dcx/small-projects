@@ -1,0 +1,6 @@
+# depslib dependency file v1.0
+1377741026 source:g:\study\acm\poj\1314\main.cpp
+	<iostream>
+	<algorithm>
+	<fstream>
+

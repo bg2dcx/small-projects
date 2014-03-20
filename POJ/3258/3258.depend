@@ -1,0 +1,5 @@
+# depslib dependency file v1.0
+1377470998 source:g:\study\acm\poj\3258\main.cpp
+	<iostream>
+	<algorithm>
+

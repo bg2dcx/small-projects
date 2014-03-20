@@ -1,0 +1,26 @@
+2 13 8
+RYGPBRYGBRPOP
+R
+B
+GG
+Y
+P
+B
+P
+RR
+2 6 5
+RYGRYB
+R
+YY
+G
+G
+B
+3 9 6
+QQQQQQQQQ
+Q
+QQ
+Q
+Q
+QQ
+Q
+0 6 0
