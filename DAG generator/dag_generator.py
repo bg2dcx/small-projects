@@ -1,7 +1,10 @@
+#!/usr/bin/python
 import sys
 import os
 import re
 import copy
+#import networkx as nx
+#import matplotlib.pyplot as plt
 
 #atom = value[]
 
@@ -135,9 +138,13 @@ def type_parse(fileName):
 		
 def rule_parse(types,filename):
 	fileHandle = open(filename)
-	lines = fileHandle.readlines()
+	rule_pattern = re.compile(r'pattern=([\s\S]*?)action=')
+	content = fileHandle.read()
+	#print content
+	patterns = rule_pattern.findall(content)
+	#print patterns
 	rules=[]
-	for line in lines:
+	for line in patterns:
 		rule=[]
 		for type in types:
 			pattern = type +'=(\d+?),'
@@ -150,6 +157,16 @@ def rule_parse(types,filename):
 		#print rule
 		rules.append([[rule],[]])
 	return rules
+
+
+def draw_dag(rules,dag):
+    dg = nx.DiGraph()
+    for i in range(len(rules)):
+        dg.add_node(i)
+    for p in dag:
+        dg.add_edge(p[0],p[1])
+    nx.draw_circular(dg)
+    plt.show()
 
 
 if __name__=="__main__":
@@ -169,3 +186,4 @@ if __name__=="__main__":
 		# rules.append([[atom],[]])
 	dag=dag_generator(rules)
 	print dag
+	#draw_dag(rules,dag)
