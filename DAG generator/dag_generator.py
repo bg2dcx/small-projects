@@ -113,7 +113,7 @@ def dag_generator(rules):
 		match_range=copy.deepcopy(rules[i])
 		#print "loop on",i
 		#print "---------------------------------"
-		for j in range(i):
+		for j in range(i+1,len(rules)):
 			#print "Comparing",match_range,"     and rule",j,":",rules[j]
 			if molecule_intersection(match_range, rules[j])!=None:
 				dag.append((i,j))
@@ -168,6 +168,199 @@ def draw_dag(rules,dag):
     nx.draw_circular(dg)
     plt.show()
 
+def transitive_reduction(dag):
+	redundant = [0 for i in range(len(dag))]
+	for i in range(len(dag)):
+		edge1 = dag[i]
+		for j in range(len(dag)):
+			edge2 = dag[j]
+			if (edge1[1] == edge2[1] and edge1[0]> edge2[0]):
+				redundant[j]=1
+	ans = []
+	for i in range(len(dag)):
+		if (redundant[i] == 0):
+			ans.append(dag[i])
+	return ans
+	
+#   Structure
+#   singularity = [value1,value2,....., ,]  value -1 means a wildcard
+#   atom = main singularity - {singularity i} 
+#   atom = [main singularity, singularity 1, singularity 2, ....]
+#   molecule = [atom1, atom2, atom......]
+
+
+#singu a include singu b
+def include_singu(a,b):
+	for i in range(0,len(a)):
+		if (a[i] != b[i] and a[i] != -1):
+			return False
+	return True
+
+#intersection of singu1 and singu2 
+# -1 means a wildcard
+def intersect_singu(a,b):
+	ans = []
+	for i in range(0,len(a)):
+		if (a[i] == b[i]):
+			ans.append(a[i])
+		elif (a[i] == -1):
+			ans.append(b[i])
+		elif (b[i] == -1):   
+			ans.append(a[i])
+		else:             # a and b differing on any value domain indicates that they don't intersect
+			return None
+	return ans
+
+
+# intersection of atom1 and atom2 : a new atom whose main area is the intersection of the two main areas 
+#                                   and whose holes are old holes of atom1 and atom2 that remain in the new main area
+# Potential optimization: check repetition
+def intersect_atom(a,b):
+	ans=[]
+	domain = intersect_singu(a[0],b[0])
+	if (domain == None):
+		return None
+	ans.append(domain)
+	for i in range(1,len(a)):
+		temp = intersect_singu(domain, a[i])
+		if (temp != None):
+			ans.append(temp)
+	for i in range(1,len(b)):
+		temp = intersect_singu(domain, b[i])
+		if (temp != None):
+			ans.append(temp)
+	for i in range(1,len(ans)):
+		if (ans[i] == ans[0]):
+			return None
+	return ans
+# using '^' to represent intersect 	
+# atomA ([mainA, singuA1, singuA2....])  - atomB ([mainB, singuB1, singuB2, ...] =
+#  [mainA, mainA ^ mainB, singuA1, singuA2.., singuAn] +
+#  [singuBi ^ mainA ^ main B, singuA1, singuA2...., singuAn]
+# Reason: any hole in A will still be a hole 
+#         intersection of mainA and mainB will be a new hole
+#         the part of a hole in B that falls into (mainA^mainB) and doesn't intersect with any hole in A results in a concrete piece after A-B
+#  always return a molecule
+def subtract_atom(a,b):
+	newAtom1 = []
+	newDomain = intersect_singu(a[0],b[0])
+	if (newDomain == None):
+		return None
+	for i in range(1,len(a)):
+		if include_singu(a[i],newDomain):
+			return None
+	ans = []
+	if (include_singu(newDomain,a[0]) == False):
+		newAtom1.append(a[0])
+		newAtom1.append(newDomain)
+		for i in range(1,len(a)):
+			if (include_singu(newDomain,a[i]) == False):
+			#only subtract holes of A that don't fall into the new hole mainA^mainB
+				newAtom1.append(a[i])      
+		ans.append(newAtom1)
+	for i in range(1,len(b)):
+		atomMain = intersect_singu(b[i],a[0]) #b[i] is already in mainB 
+		if (atomMain == None):
+			continue
+		newAtom = [];
+		newAtom.append(atomMain)
+		valid = True
+		for j in range(1,len(a)):
+			singu = intersect_singu(atomMain,a[j])
+			if (singu != None):
+				if (singu == atomMain):  
+					valid = False
+					break
+				else:
+					newAtom.append(singu)
+		if (valid):
+			ans.append(newAtom)
+	return ans
+#moleculeA @ moleculeB = atoms in A @ atoms in B
+# atoms in the same molecule don't intersect
+def intersect_molecule(a,b):
+	ans = []
+	for atomA in a:
+		for atomB in b:
+			newAtom = intersect_atom(atomA, atomB)
+			if (newAtom != None):
+				ans.append(newAtom)
+	if (len(ans) == 0):
+		return None
+	else:
+		return ans
+
+	
+# this is not the most efficient but the correctness can be guarenteed. 
+# after A - B: all atoms in A don't intersect with any atom in B
+def subtract_molecule(a,b):
+	ans = [copy.deepcopy(atom) for atom in a]
+	cursor =0
+	while (cursor < len(ans)):
+		deleted = False
+		for atom in b:
+			temp = subtract_atom(ans[cursor],atom)
+			if (temp != None):
+				del ans[cursor]
+				if (len(temp) == 0):  # A[cursor] is subtracted to empty
+					deleted= True
+					break
+				ans.insert(cursor,temp[0]) # replace A[cursor] with a subtracted atom
+				for i in range(1,len(temp)):
+					ans.append(temp[i]) #append the rest subtracted atoms
+		if (not deleted):
+			cursor+=1
+	if (len(ans) == 0):
+		return None
+	else:
+		return ans
+				
+#new dag generator
+def new_dag_generator(rules):
+	dag = []
+	for i in range(len(rules)):
+		match_range=copy.deepcopy(rules[i])
+		#print "loop on",i
+		#print "---------------------------------"
+		for j in range(i+1,len(rules)):
+			#print "     and rule",j,":",rules[j]
+			if intersect_molecule(match_range, rules[j])!=None:
+				dag.append((i,j))
+				match_range = subtract_molecule(match_range,rules[j])
+				#print "match changes to   ",match_range
+				#print rules[i]
+				#print rules[j]
+				rules[j] = subtract_molecule(rules[j],rules[i])
+				#print "rule",j,"changes to   ",rules[j]
+				if match_range == None:
+					break
+	return dag	
+
+def new_rule_parse(types,filename):
+	fileHandle = open(filename)
+	rule_pattern = re.compile(r'pattern=([\s\S]*?)action=')
+	content = fileHandle.read()
+	#print content
+	patterns = rule_pattern.findall(content)
+	#print patterns
+	rules=[]
+	for line in patterns:
+		rule=[]
+		for type in types:
+			pattern = type +'=(\d+?),'
+			reg = re.compile(pattern)
+			value = reg.findall(line)
+			if len(value)==0:
+				rule.append(-1)
+			else: 
+				rule.append(int(value[0]))
+		#print rule
+		rules.append([[rule]])
+	return rules				
+		
+	
+
+
 
 if __name__=="__main__":
 	#parse all the types 
@@ -177,13 +370,17 @@ if __name__=="__main__":
 		print "One pattern on each line in rule_file."
 		sys.exit(0)
 	rules = rule_parse(types,sys.argv[1])
-	# fileHandle = open(sys.argv[1])
-	# lines = fileHandle.readlines()
-	# rules=[]
-	# for line in lines:
-		# atom = [int(i) for i in line.strip('\n').split(' ')]
-		# #print atom
-		# rules.append([[atom],[]])
 	dag=dag_generator(rules)
+	print "-----original dag-------"
 	print dag
+	print "-----after reduction----"
+	tr_dag = transitive_reduction(dag)
+	print tr_dag
+	rules = new_rule_parse(types,sys.argv[1])
+	dag=new_dag_generator(rules)
+	print "-----new dag-------"
+	print dag
+	print "-----after reduction----"
+	tr_dag = transitive_reduction(dag)
+	print tr_dag
 	#draw_dag(rules,dag)
