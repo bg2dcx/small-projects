@@ -1,0 +1,9 @@
+[{pattern={port=1,tcpSrcPort=2,tcpDstPort=1,action=OutputPort(2)}
+{pattern={port=1,tcpSrcPort=3,tcpDstPort=1,action=OutputPort(3)} 
+{pattern={port=1,tcpSrcPort=2,action=OutputPort(2)}
+{pattern={port=1,tcpSrcPort=3,action=OutputPort(3)}
+{pattern={tcpSrcPort=2,action=}
+{pattern={tcpSrcPort=3,action=}
+{pattern={port=1,tcpDstPort=1,action=OutputPort(3)}
+{pattern={tcpDstPort=1,action=}
+{pattern={port=1,action=OutputPort(3)}]

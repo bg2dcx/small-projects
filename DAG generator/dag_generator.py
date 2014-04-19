@@ -168,19 +168,23 @@ def draw_dag(rules,dag):
     nx.draw_circular(dg)
     plt.show()
 
-def transitive_reduction(dag):
-	redundant = [0 for i in range(len(dag))]
+def transitive_reduction(dag, maxi):
+	connected =[]
+	for i in range(maxi):
+		connected.append([0 for i in range(maxi)])
 	for i in range(len(dag)):
-		edge1 = dag[i]
-		for j in range(len(dag)):
-			edge2 = dag[j]
-			if (edge1[1] == edge2[1] and edge1[0]> edge2[0]):
-				redundant[j]=1
-	ans = []
-	for i in range(len(dag)):
-		if (redundant[i] == 0):
-			ans.append(dag[i])
-	return ans
+		connected[dag[i][1]][dag[i][0]] = 1
+	tr_dag = []
+	for i in range(maxi):
+		for j in range(i):
+			if (connected[i][j] == 1):
+				for k in range(j+1,i):
+					if (connected[i][k] ==1 and connected[k][j] ==1):
+						connected[i][j] =0
+						break
+			if (connected[i][j] == 1):
+				tr_dag.append((j,i))
+	return tr_dag
 	
 #   Structure
 #   singularity = [value1,value2,....., ,]  value -1 means a wildcard
@@ -320,20 +324,21 @@ def new_dag_generator(rules):
 	dag = []
 	for i in range(len(rules)):
 		match_range=copy.deepcopy(rules[i])
+		if match_range == None:
+			continue
 		#print "loop on",i
 		#print "---------------------------------"
 		for j in range(i+1,len(rules)):
 			#print "     and rule",j,":",rules[j]
+		  if (rules[j] != None):
 			if intersect_molecule(match_range, rules[j])!=None:
 				dag.append((i,j))
-				match_range = subtract_molecule(match_range,rules[j])
+				#match_range = subtract_molecule(match_range,rules[j])
 				#print "match changes to   ",match_range
 				#print rules[i]
 				#print rules[j]
 				rules[j] = subtract_molecule(rules[j],rules[i])
 				#print "rule",j,"changes to   ",rules[j]
-				if match_range == None:
-					break
 	return dag	
 
 def new_rule_parse(types,filename):
@@ -374,13 +379,13 @@ if __name__=="__main__":
 	print "-----original dag-------"
 	print dag
 	print "-----after reduction----"
-	tr_dag = transitive_reduction(dag)
+	tr_dag = transitive_reduction(dag, len(rules))
 	print tr_dag
 	rules = new_rule_parse(types,sys.argv[1])
 	dag=new_dag_generator(rules)
 	print "-----new dag-------"
 	print dag
 	print "-----after reduction----"
-	tr_dag = transitive_reduction(dag)
+	tr_dag = transitive_reduction(dag, len(rules))
 	print tr_dag
 	#draw_dag(rules,dag)
